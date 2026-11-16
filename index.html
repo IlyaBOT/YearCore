@@ -8,6 +8,7 @@
   <title>YEARCORE — твоя история интернета</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
+  <script src="trends.js" defer></script>
   <script src="script.js" defer></script>
 </head>
 <body>
@@ -20,32 +21,33 @@
 
     <section class="intro" aria-label="Вступление">
       <div class="intro-text"><div class="eyebrow"><span class="star">✳</span> СУБЪЕКТИВНАЯ ИСТОРИЯ ИНТЕРНЕТА</div><h1>У каждого года<br>был свой <em>вайб.</em></h1><p>Собери свою капсулу времени из мемов, сайтов, игр, гаджетов и всего, по чему скучаешь.</p></div>
-      <div class="intro-sticker" aria-hidden="true"><span>THE GOOD<br>OLD WEB</span><small>1990 — ∞</small><i>↗</i></div>
+      <div class="intro-sticker" aria-hidden="true"><span>THE GOOD<br>OLD WEB</span><small>1990 — 2025</small><i>↗</i></div>
     </section>
 
     <section class="years-area" id="builder" aria-label="Выбор года">
-      <div class="year-header"><span class="section-index">01 / ВЫБЕРИ ЭПОХУ</span><span class="year-hint">Любой год. Твоя история.</span></div>
-      <div class="year-selector"><button type="button" class="year-arrow" id="prevYear" aria-label="Предыдущий год">‹</button><div class="year-scroller" id="yearStrip" role="group" aria-label="Популярные годы"></div><button type="button" class="year-arrow" id="nextYear" aria-label="Следующий год">›</button><label class="year-jump">Другой год <select id="yearSelect" aria-label="Выбрать год"></select></label></div>
+      <div class="year-header"><span class="section-index">01 / ВЫБЕРИ ЭПОХУ</span><span class="year-hint">36 лет истории — выбирай свой.</span></div>
+      <div class="decade-switch" id="decadeSwitch" role="group" aria-label="Выбери десятилетие"></div>
+      <div class="year-selector"><button type="button" class="year-arrow" id="prevYear" aria-label="Предыдущий год">‹</button><div class="year-scroller" id="yearStrip" role="group" aria-label="Годы с 1990 по 2025"></div><button type="button" class="year-arrow" id="nextYear" aria-label="Следующий год">›</button></div>
     </section>
 
     <main class="workspace" aria-label="Конструктор подборок">
-      <aside class="library panel" aria-label="Каталог трендов">
+      <aside id="libraryPanel" class="library panel" aria-label="Каталог трендов">
         <div class="panel-heading"><div><span class="section-index">02 / БИБЛИОТЕКА</span><h2>Артефакты <span id="libraryCount" class="count">0</span></h2></div><button type="button" class="icon-button" id="addButton" title="Добавить свой тренд" aria-label="Добавить свой тренд">+</button></div>
         <p class="panel-description">Нажми на карточку или перетащи её на поле.</p>
         <label class="searchbox"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg><input type="search" id="search" placeholder="Найти что-то ностальгичное…" autocomplete="off"></label>
         <div class="filters" id="filters" aria-label="Категории"></div>
         <div class="library-list" id="catalog" aria-live="polite"></div>
         <button type="button" id="addCustomBottom" class="add-custom"><span>＋</span> Не нашёл? Добавь свой</button>
-        <div class="library-footer"><span>✳</span> Идеи для каталога — из твоих референсов 2007–2016.</div>
+        <div class="library-footer"><span>✳</span> Более 400 идей: интернет, техника, кино, музыка, политика, мода и события 1990–2025. Новые записи можно дополнять своими.</div>
       </aside>
 
-      <section class="editor" aria-label="Редактор подборки">
+      <section id="editorPanel" class="editor" aria-label="Редактор подборки">
         <div class="editor-toolbar"><div class="mode-group" id="modes" role="group" aria-label="Тип подборки"><button type="button" data-mode="poster" aria-pressed="true">▦ <span>Постер</span></button><button type="button" data-mode="tier" aria-pressed="false">☷ <span>Тир-лист</span></button><button type="button" data-mode="bingo" aria-pressed="false">▩ <span>Бинго</span></button></div><div class="toolbar-actions"><button type="button" class="button ghost" id="shuffleButton" title="Перемешать карточки">⇄ <span>Микс</span></button><button type="button" class="button ghost" id="clearButton">Очистить</button></div></div>
         <div class="board-wrap"><div class="board" id="board" aria-live="polite"></div></div>
         <div class="board-foot"><div class="foot-note"><span class="asterisk">✳</span> <span id="boardStatus">Здесь живут твои воспоминания</span></div><div class="canvas-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div></div>
       </section>
 
-      <aside class="tools panel" aria-label="Настройки и экспорт">
+      <aside id="toolsPanel" class="tools panel" aria-label="Настройки и экспорт">
         <div class="panel-heading"><div><span class="section-index">03 / ОФОРМЛЕНИЕ</span><h2>Моя капсула</h2></div><span class="mini-spark">✦</span></div>
         <label class="input-label" for="boardTitle">Название подборки</label><input id="boardTitle" class="field" maxlength="68" placeholder="Например, мой золотой 2009">
         <label class="input-label" for="boardNote">Подпись</label><textarea id="boardNote" class="field" maxlength="160" rows="3" placeholder="Что тебе запомнилось?"></textarea>
@@ -60,11 +62,12 @@
         <div class="privacy-note"><span>⌁</span> Автосохранение в браузере. Без аккаунта, сервера и слежки. Чтобы перенести подборки на другое устройство, используй JSON.</div>
       </aside>
     </main>
+    <nav class="mobile-dock" id="mobileDock" aria-label="Быстрый переход по конструктору"><button type="button" data-mobile-target="libraryPanel" aria-label="К каталогу"><span aria-hidden="true">▦</span> Каталог</button><button type="button" data-mobile-target="editorPanel" aria-label="К постеру"><span aria-hidden="true">◫</span> Поле</button><button type="button" data-mobile-target="toolsPanel" aria-label="К сохранению и экспорту"><span aria-hidden="true">↥</span> Экспорт</button></nav>
     <footer class="site-footer"><div><b>YEARCORE<span>✳</span></b> <span>Collect the internet you remember.</span></div><span>MADE FOR NOSTALGIA, NOT FOR ALGORITHMS · 2026</span></footer>
   </div>
 
-  <dialog id="itemDialog" class="dialog"><form id="itemForm" method="dialog"><div class="dialog-top"><div><span class="section-index">НОВЫЙ АРТЕФАКТ</span><h2>Добавь своё ✳</h2></div><button type="button" class="close-dialog" data-close="itemDialog" aria-label="Закрыть">×</button></div><p>Это может быть мем, сайт, гаджет, песня — вообще что угодно.</p><label for="itemTitle">Название *</label><input id="itemTitle" required maxlength="65" placeholder="Например, ICQ или Nokia N95"><label for="itemCategory">Категория</label><select id="itemCategory"><option value="sites">Сайты / соцсети</option><option value="devices">Устройства</option><option value="games">Игры</option><option value="memes">Мемы / культура</option><option value="apps">Приложения / софт</option></select><label for="itemUpload">Изображение (необязательно)</label><input type="file" id="itemUpload" accept="image/png,image/jpeg,image/webp,image/gif"><span class="or">или ссылка на картинку</span><input type="url" id="itemUrl" placeholder="https://example.com/image.jpg"><p class="form-note">Файлы уменьшаются перед сохранением. Ссылки на сторонние картинки могут не попасть в PNG из-за CORS.</p><p id="formError" class="form-error" aria-live="polite"></p><div class="dialog-actions"><button type="button" class="button light" data-close="itemDialog">Отмена</button><button type="submit" class="button primary">Добавить в каталог ↗</button></div></form></dialog>
-  <dialog id="helpDialog" class="dialog"><div class="dialog-top"><div><span class="section-index">БЫСТРЫЙ СТАРТ</span><h2>Как это работает?</h2></div><button type="button" class="close-dialog" data-close="helpDialog" aria-label="Закрыть">×</button></div><div class="help-content"><p><b>01 — Выбери год.</b> В каталоге появятся тренды этого периода. Для остальных лет создай собственные записи.</p><p><b>02 — Выбери формат.</b> Постер — ностальгический коллаж; тир-лист — ранжирование от S до D; бинго — сетка любимых явлений.</p><p><b>03 — Собери свою историю.</b> Нажимай на карточки, перетаскивай их, меняй местами и удаляй. В тир-листе карточки можно переносить между уровнями.</p><p><b>04 — Сохрани результат.</b> PNG — чтобы поделиться. JSON — резервная копия или перенос на другой браузер.</p><p><b>Важно:</b> GitHub Pages не сохраняет подборки на сервере. Данные остаются в текущем браузере до экспорта или очистки его хранилища.</p></div><button type="button" class="button primary full" data-close="helpDialog">Понятно, погнали</button></dialog>
+  <dialog id="itemDialog" class="dialog"><form id="itemForm" method="dialog"><div class="dialog-top"><div><span class="section-index">НОВЫЙ АРТЕФАКТ</span><h2>Добавь своё ✳</h2></div><button type="button" class="close-dialog" data-close="itemDialog" aria-label="Закрыть">×</button></div><p>Это может быть мем, сайт, гаджет, песня — вообще что угодно.</p><label for="itemTitle">Название *</label><input id="itemTitle" required maxlength="65" placeholder="Например, ICQ или Nokia N95"><label for="itemCategory">Категория</label><select id="itemCategory"><option value="sites">Сайты / соцсети</option><option value="devices">Устройства</option><option value="games">Игры</option><option value="memes">Мемы / культура</option><option value="apps">Приложения / софт</option><option value="cinema">Кино</option><option value="music">Музыка</option><option value="tv">Сериалы / ТВ</option><option value="politics">Политика</option><option value="events">События</option><option value="fashion">Мода</option></select><label for="itemUpload">Изображение (необязательно)</label><input type="file" id="itemUpload" accept="image/png,image/jpeg,image/webp,image/gif"><span class="or">или ссылка на картинку</span><input type="url" id="itemUrl" placeholder="https://example.com/image.jpg"><p class="form-note">Файлы уменьшаются перед сохранением. Ссылки на сторонние картинки могут не попасть в PNG из-за CORS.</p><p id="formError" class="form-error" aria-live="polite"></p><div class="dialog-actions"><button type="button" class="button light" data-close="itemDialog">Отмена</button><button type="submit" class="button primary">Добавить в каталог ↗</button></div></form></dialog>
+  <dialog id="helpDialog" class="dialog"><div class="dialog-top"><div><span class="section-index">БЫСТРЫЙ СТАРТ</span><h2>Как это работает?</h2></div><button type="button" class="close-dialog" data-close="helpDialog" aria-label="Закрыть">×</button></div><div class="help-content"><p><b>01 — Выбери год.</b> В каталоге появятся тренды этого периода. В каждом году есть готовые идеи из разных категорий.</p><p><b>02 — Выбери формат.</b> Постер — ностальгический коллаж; тир-лист — ранжирование от S до D; бинго — сетка любимых явлений.</p><p><b>03 — Собери свою историю.</b> Нажимай на карточки, перетаскивай их, меняй местами и удаляй. В тир-листе карточки можно переносить между уровнями.</p><p><b>04 — Сохрани результат.</b> PNG — чтобы поделиться. JSON — резервная копия или перенос на другой браузер.</p><p><b>Важно:</b> GitHub Pages не сохраняет подборки на сервере. Данные остаются в текущем браузере до экспорта или очистки его хранилища.</p></div><button type="button" class="button primary full" data-close="helpDialog">Понятно, погнали</button></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
