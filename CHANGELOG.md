@@ -2,6 +2,19 @@
 
 All notable changes to YEARCORE are documented here.
 
+## [0.2.0] — 2026-11-16
+
+### Added
+- 397 curated catalog entries covering every year from 1990 to 2025 (11–12 per year), across technology, culture, politics, music, cinema, games, fashion, TV and events.
+- Mobile quick navigation: Catalog / Board / Export.
+- Decade shortcuts and accessible year selector for the complete range.
+- Self-contained visual cards for new trends without loading third-party image assets.
+
+### Changed
+- Improved responsive layouts for phones and tablets, including larger tap targets, mobile modal sheet, and readable boards.
+- Removed the separate “Other year” control and limited selectable years to 1990–2025.
+- New year defaults show four suggested cards instead of preloading every trend.
+
 ## [0.1.0] — 2026-11-16
 
 ### Added
