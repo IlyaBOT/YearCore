@@ -31,7 +31,7 @@
 1992|events|Олимпиада в Барселоне|🏅|Олимпиада в Барселоне
 1992|fashion|Мешковатые джинсы и хип-хоп|👖|Мешковатые джинсы и хип-хоп
 1992|devices|Sony MiniDisc|🎧|Sony MiniDisc
-1993|devices|Первый Intel Pentium|💾|Первый Intel Pentium
+1993|devices|Первый Intel Pentium|💾|en:Pentium
 1993|apps|Windows NT 3.1|🪟|Windows NT 3.1
 1993|games|DOOM|👹|DOOM
 1993|sites|Браузер NCSA Mosaic|🌐|Браузер NCSA Mosaic
@@ -63,7 +63,7 @@
 1995|politics|Дейтонские соглашения|📜|Дейтонские соглашения
 1995|events|Стыковка шаттла Atlantis со станцией «Мир»|🚀|Стыковка шаттла Atlantis со станцией Мир
 1995|fashion|Платья-комбинации|👗|Платья-комбинации
-1995|apps|Java представлена публике|☕|Java представлена публике
+1995|apps|JavaScript появляется в Netscape|☕|en:JavaScript
 1996|devices|Nokia 8110|📱|Nokia 8110
 1996|apps|ICQ — «Аська»|💬|ICQ Аська
 1996|games|Pokémon Red / Green|🔴|Pokémon Red / Green
@@ -75,7 +75,7 @@
 1996|events|Олимпиада в Атланте|🏅|Олимпиада в Атланте
 1996|fashion|Кроссовки на платформе|👟|Кроссовки на платформе
 1996|devices|Tamagotchi|🥚|Tamagotchi
-1997|devices|Появление DVD на массовом рынке|📀|Появление DVD на массовом рынке
+1997|devices|Появление DVD на массовом рынке|📀|en:DVD logo
 1997|apps|Mac OS 8|🍎|Mac OS 8
 1997|games|Final Fantasy VII|⚔️|Final Fantasy VII
 1997|sites|Яндекс|🤝|Яндекс
@@ -89,14 +89,14 @@
 1998|devices|Первый iMac G3|🖥️|Первый iMac G3
 1998|apps|Windows 98|🪟|Windows 98
 1998|games|Half-Life|🔬|Half-Life
-1998|sites|Запуск Google|🔎|Запуск Google
+1998|sites|Запуск Google|🔎|en:Google
 1998|cinema|«Шоу Трумана»|📺|Шоу Трумана
 1998|music|Britney Spears — ...Baby One More Time|🎤|Britney Spears ...Baby One More Time
-1998|tv|«Суперкрошки»|💗|Суперкрошки
+1998|tv|«Суперкрошки»|💗|en:The Powerpuff Girls
 1998|politics|Соглашение Страстной пятницы|🕊️|Соглашение Страстной пятницы
 1998|events|Запуск первого модуля МКС|🛰️|Запуск первого модуля МКС
-1998|fashion|Минимализм конца 90-х|🕶️|Минимализм конца 90-х
-1998|devices|Sega Dreamcast в Японии|🎮|Sega Dreamcast в Японии
+1998|fashion|Минимализм конца 90-х|🕶️|en:1990s in fashion
+1998|devices|Sega Dreamcast в Японии|🎮|en:Dreamcast
 1999|devices|Nokia 3210|📱|Nokia 3210
 1999|apps|MSN Messenger|💬|MSN Messenger
 1999|games|Counter-Strike (бета)|🔫|Counter-Strike
@@ -396,3 +396,7 @@
 2025|memes|Italian brainrot и «6-7»|🌀|Italian brainrot и 6-7
 2025|cinema|«KPop Demon Hunters»|🎤|KPop Demon Hunters
 2004|sites|Эпоха Web 2.0|✳|Web 2.0
+2000|apps|Macromedia Flash Player и веб-анимации|⚡|en:Adobe Flash
+2000|sites|Newgrounds и Flash Portal|🎬|en:Newgrounds
+2002|apps|Расцвет J2ME Java-игр на телефонах|📱|en:Java Platform, Micro Edition
+2004|games|Расцвет браузерных Flash-игр|🕹️|en:Flash game

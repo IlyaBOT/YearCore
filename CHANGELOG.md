@@ -2,6 +2,14 @@
 
 All notable changes to YEARCORE are documented here.
 
+## [0.2.4] — 2026-11-16
+
+### Catalog and image-query fixes
+- Corrected image search queries for Google, Dreamcast, The Powerpuff Girls, late-90s minimalism, DVD and Pentium.
+- Replaced the 1995 Java entry with JavaScript in Netscape.
+- Added early-2000s trends for J2ME mobile games, Flash Player / web animation, Newgrounds and the rise of browser Flash games.
+- Preserved existing index-based catalog IDs and previous Web 1.0 / Web 2.0 and 2006 revisions.
+
 ## [0.2.3] — 2026-11-16
 
 ### Catalog corrections

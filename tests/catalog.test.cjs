@@ -44,4 +44,25 @@ for (const [year, title] of [
 ]) {
   assert(catalog.some(item => item.year === year && item.title === title), `Missing ${year}: ${title}`);
 }
+
+    
+// Image-query and catalog regression checks for specific user-reported cards.
+for (const [year, title, queryPart] of [
+  [1998, 'Запуск Google', 'Google'],
+  [1998, '«Суперкрошки»', 'Powerpuff'],
+  [1998, 'Sega Dreamcast в Японии', 'Dreamcast'],
+  [1998, 'Минимализм конца 90-х', '1990s in fashion'],
+  [1997, 'Появление DVD на массовом рынке', 'DVD logo'],
+  [1993, 'Первый Intel Pentium', 'Pentium'],
+  [2000, 'Macromedia Flash Player и веб-анимации', 'Adobe Flash'],
+  [2000, 'Newgrounds и Flash Portal', 'Newgrounds'],
+  [2002, 'Расцвет J2ME Java-игр на телефонах', 'Micro Edition'],
+  [2004, 'Расцвет браузерных Flash-игр', 'Flash game']
+]) {
+  const item = catalog.find(entry => entry.year === year && entry.title === title);
+  assert(item, `Missing catalog entry: ${year} ${title}`);
+  assert(String(item.imageQuery || '').includes(queryPart), `Unexpected imageQuery for ${title}: ${item?.imageQuery}`);
+}
+assert(!catalog.some(item => item.title === 'Java представлена публике'), 'Old Java entry should be removed');
+
 console.log(`OK: ${catalog.length} curated trends, 36 years, >=10 per year, all key categories.`);
