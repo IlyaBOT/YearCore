@@ -3,8 +3,9 @@
 /* YEARCORE: a static, local-first trend-list maker. No account, API, or build step. */
 const DB_KEY = 'yearcore-v1';
 const CATEGORIES = {
-  all: 'Все', sites: 'Сайты', devices: 'Гаджеты', games: 'Игры',
-  memes: 'Мемы', apps: 'Софт'
+  all: 'Все', sites: 'Сайты', devices: 'Техника', games: 'Игры',
+  memes: 'Мемы', apps: 'Софт', cinema: 'Кино', music: 'Музыка',
+  tv: 'Сериалы', politics: 'Политика', events: 'События', fashion: 'Мода'
 };
 const TIERS = ['S','A','B','C','D'];
 const RANK_COLORS = {S:'#f67c75', A:'#ffbe7d', B:'#ffe58e', C:'#b5e3a3', D:'#aad4ed'};
@@ -47,9 +48,12 @@ const SEEDS = [
   [2016,'pokemon','Pokémon GO','games','🔴'],
   [2016,'figma','Figma','apps','🎨']
 ];
-const BUILTIN = SEEDS.map(([year,slug,title,category,emoji]) => ({
-  id:`${year}-${slug}`,year,title,category,emoji,src:`assets/${year}-${slug}.webp`
-}));
+const BUILTIN = [
+  ...SEEDS.map(([year,slug,title,category,emoji]) => ({
+    id:`${year}-${slug}`,year,title,category,emoji,src:`assets/${year}-${slug}.webp`
+  })),
+  ...(window.YEARCORE_TRENDS || [])
+];
 const byId = id => document.getElementById(id);
 const safeText = value => String(value ?? '').replace(/[&<>"']/g,ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const validUrl = value => typeof value === 'string' && ( /^https:\/\//i.test(value) || /^data:image\/(png|jpeg|webp|gif);base64,[a-z0-9+/=]+$/i.test(value));
@@ -59,9 +63,9 @@ for (const item of BUILTIN) {
   SEED_IDS.get(item.year).push(item.id);
 }
 const defaultYear = y => ({
-  title:`Мой ${y}`,note:'', poster:[...(SEED_IDS.get(y)||[])],
+  title:`Мой ${y}`,note:'', poster:[...(SEED_IDS.get(y)||[]).slice(0,4)],
   tier:{S:[],A:[],B:[],C:[],D:[]},
-  bingo:Array(25).fill(null),bingoSize:5,marked:[]
+  bingo:Array(25).fill(null),bingoSize:3,marked:[]
 });
 function readDb(){
   try {
@@ -79,9 +83,9 @@ let dragId = null;
 let toastTimer = 0;
 const pathnameHash = location.hash.match(/^#(\d{4})\/(poster|tier|bingo)$/);
 if(pathnameHash) { year=Number(pathnameHash[1]); mode=pathnameHash[2]; }
-function canYear(y) {return Number.isInteger(y) && y>=1980 && y<=2035;}
+function canYear(y) {return Number.isInteger(y) && y>=1990 && y<=2025;}
 if(!canYear(year))year=2009;
-const years = () => Array.from({length:56},(_,i)=>1980+i);
+const years = () => Array.from({length:36},(_,i)=>1990+i);
 function getYear(y=year){
   if(!Object.prototype.hasOwnProperty.call(db.years,y)) db.years[y]=defaultYear(y);
   const d=db.years[y];
@@ -104,9 +108,10 @@ function itemsForYear(y=year){return [...BUILTIN,...db.custom].filter(it=>it.yea
 function itemById(id){return BUILTIN.find(it=>it.id===id)||db.custom.find(it=>it.id===id)||null;}
 function itemArt(item){
   if(!item) return `<span class="fallback">✳</span>`;
+  const placeholder = `<span class="trend-visual cat-${safeText(item.category)}" aria-hidden="true"><span class="trend-visual-icon">${safeText(item.emoji||'✳')}</span><small>${safeText(item.title)}</small></span>`;
   const src = item.src;
   const allowed = typeof src==='string' && (src.startsWith('assets/') || validUrl(src));
-  return allowed ? `<img src="${safeText(src)}" alt="" loading="lazy" draggable="false" onerror="this.style.display='none';this.parentElement.insertAdjacentHTML('beforeend','<span class=&quot;fallback&quot;>✳</span>')">` : `<span class="fallback">${safeText(item.emoji||'✳')}</span>`;
+  return allowed ? `<img src="${safeText(src)}" alt="" loading="lazy" draggable="false" onerror="this.hidden=true;this.insertAdjacentHTML('afterend',decodeURIComponent('${encodeURIComponent(placeholder)}'))">` : placeholder;
 }
 function selectedIds(){
   const d=getYear();
@@ -114,13 +119,17 @@ function selectedIds(){
 }
 function renderYears(){
   const strip=byId('yearStrip');
-  strip.innerHTML=Array.from({length:20},(_,i)=>2005+i).map(y=>`<button type="button" data-year="${y}" class="year-chip ${year===y?'active':''}" aria-pressed="${year===y}">${y}</button>`).join('');
-  byId('yearSelect').innerHTML=years().reverse().map(y=>`<option value="${y}">${y}</option>`).join('');
-  byId('yearSelect').value=String(year);
-  strip.querySelector('.active')?.scrollIntoView({block:'nearest',inline:'center'});
+  strip.innerHTML=years().map(y=>`<button type="button" data-year="${y}" class="year-chip ${year===y?'active':''}" aria-pressed="${year===y}">${y}</button>`).join('');
+  byId('decadeSwitch').innerHTML=[1990,2000,2010,2020].map(y=>`<button type="button" class="decade-chip ${Math.floor(year/10)===y/10?'active':''}" data-decade="${y}" aria-pressed="${Math.floor(year/10)===y/10}">${y===1990?'90-е':y===2000?'00-е':y===2010?'10-е':'20-е'}</button>`).join('');
+  byId('prevYear').disabled=year===1990;
+  byId('nextYear').disabled=year===2025;
+  const active=strip.querySelector('.active');
+  if(active)strip.scrollLeft=active.offsetLeft-strip.offsetLeft-(strip.clientWidth-active.clientWidth)/2;
 }
 function renderFilters(){
-  byId('filters').innerHTML=Object.entries(CATEGORIES).map(([id,label])=>`<button type="button" class="filter ${filter===id?'active':''}" data-filter="${id}" aria-pressed="${filter===id}">${label}</button>`).join('');
+  const counts={all:itemsForYear().length};
+  for(const item of itemsForYear())counts[item.category]=(counts[item.category]||0)+1;
+  byId('filters').innerHTML=Object.entries(CATEGORIES).map(([id,label])=>`<button type="button" class="filter ${filter===id?'active':''}" data-filter="${id}" aria-pressed="${filter===id}">${label}<small>${counts[id]||0}</small></button>`).join('');
 }
 function renderLibrary(){
   const list=itemsForYear();const selected=new Set(selectedIds());
@@ -456,10 +465,10 @@ async function exportPng(){
 }
 
 function installEvents(){
-  byId('prevYear').addEventListener('click',()=>setYear(Math.max(1980,year-1)));
-  byId('nextYear').addEventListener('click',()=>setYear(Math.min(2035,year+1)));
+  byId('prevYear').addEventListener('click',()=>setYear(Math.max(1990,year-1)));
+  byId('nextYear').addEventListener('click',()=>setYear(Math.min(2025,year+1)));
   byId('yearStrip').addEventListener('click',e=>{const b=e.target.closest('[data-year]');if(b)setYear(Number(b.dataset.year));});
-  byId('yearSelect').addEventListener('change',e=>setYear(Number(e.target.value)));
+  byId('decadeSwitch').addEventListener('click',e=>{const b=e.target.closest('[data-decade]');if(b)setYear(Number(b.dataset.decade));});
   byId('modes').addEventListener('click',e=>{const b=e.target.closest('[data-mode]');if(b)setMode(b.dataset.mode);});
   byId('filters').addEventListener('click',e=>{const b=e.target.closest('[data-filter]');if(!b)return;filter=b.dataset.filter;renderFilters();renderLibrary();});
   byId('search').addEventListener('input',e=>{search=e.target.value;renderLibrary();});
@@ -513,6 +522,11 @@ function installEvents(){
   byId('backupButton').addEventListener('click',exportAll);
   byId('importJson').addEventListener('click',()=>byId('importFile').click());
   byId('importFile').addEventListener('change',importYear);
-  window.addEventListener('hashchange',()=>{const m=location.hash.match(/^#(\d{4})\/(poster|tier|bingo)$/);if(m){year=Number(m[1]);mode=m[2];if(canYear(year))renderAll();}});
+  document.querySelectorAll('[data-mobile-target]').forEach(button=>button.addEventListener('click',()=>{
+    const el=byId(button.dataset.mobileTarget);
+    if(el)el.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});
+    document.querySelectorAll('[data-mobile-target]').forEach(b=>b.classList.toggle('active',b===button));
+  }));
+  window.addEventListener('hashchange',()=>{const m=location.hash.match(/^#(\d{4})\/(poster|tier|bingo)$/);if(m && canYear(Number(m[1]))){year=Number(m[1]);mode=m[2];renderAll();}});
 }
 getYear();installEvents();renderAll();updateHash();
