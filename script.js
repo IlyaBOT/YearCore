@@ -54,6 +54,76 @@ const BUILTIN = [
   })),
   ...(window.YEARCORE_TRENDS || [])
 ];
+const IMAGE_CACHE_KEY = 'yearcore-image-cache-v1';
+let imageCache = (() => {
+  try { return JSON.parse(localStorage.getItem(IMAGE_CACHE_KEY)) || {}; }
+  catch (_) { return {}; }
+})();
+const imageRequests = new Map();
+function saveImageCache(){
+  try { localStorage.setItem(IMAGE_CACHE_KEY, JSON.stringify(imageCache)); }
+  catch (_) { /* Browser storage may be unavailable. */ }
+}
+function normalizeImageQuery(value){
+  return String(value || '').replace(/[«»]/g,'').replace(/[–—]/g,' ').replace(/\([^)]*\)/g,' ').replace(/\s+/g,' ').trim();
+}
+async function fetchWikiThumb(query,lang){
+  const params = new URLSearchParams({
+    action:'query',format:'json',formatversion:'2',origin:'*',
+    generator:'search',gsrsearch:query,gsrlimit:'1',
+    prop:'pageimages',piprop:'thumbnail',pithumbsize:'640'
+  });
+  const response = await fetch('https://' + lang + '.wikipedia.org/w/api.php?' + params.toString());
+  if(!response.ok) throw Error('Wikipedia image search failed');
+  const data = await response.json();
+  const page = (data?.query?.pages || []).find(entry => entry?.thumbnail?.source);
+  return page?.thumbnail?.source || '';
+}
+async function ensureItemImage(item){
+  if(!item)return '';
+  if(typeof item.src==='string' && (item.src.startsWith('assets/') || validUrl(item.src)))return item.src;
+  const key = normalizeImageQuery(item.imageQuery || item.title);
+  if(!key)return '';
+  if(imageCache[key]){ item.src=imageCache[key]; return item.src; }
+  if(imageRequests.has(key))return imageRequests.get(key);
+  const request = (async () => {
+    const language = /^en:/i.test(key) ? ['en'] : /^ru:/i.test(key) ? ['ru'] : ['ru','en'];
+    const query = key.replace(/^(ru|en):/i,'').trim();
+    for(const lang of language){
+      try{
+        const src = await fetchWikiThumb(query,lang);
+        if(src && validUrl(src)){
+          imageCache[key]=src;
+          item.src=src;
+          saveImageCache();
+          return src;
+        }
+      }catch(e){ console.debug('Image search unavailable:',query,lang); }
+    }
+    return '';
+  })().finally(()=>imageRequests.delete(key));
+  imageRequests.set(key,request);
+  return request;
+}
+function hydrateAutoImages(root){
+  if(!root)return;
+  root.querySelectorAll('[data-autoimg]').forEach(shell => {
+    if(shell.dataset.loading || shell.dataset.ready)return;
+    const item=itemById(shell.dataset.autoimg);
+    if(!item)return;
+    shell.dataset.loading='1';
+    ensureItemImage(item).then(src=>{
+      if(!src || !shell.isConnected)return;
+      const fallback=shell.innerHTML;
+      const img=document.createElement('img');
+      img.src=src; img.alt=''; img.loading='lazy'; img.draggable=false;
+      img.onerror=()=>{ shell.innerHTML=fallback; delete shell.dataset.ready; };
+      shell.classList.add('auto-loaded');
+      shell.replaceChildren(img);
+      shell.dataset.ready='1';
+    }).finally(()=>{ delete shell.dataset.loading; });
+  });
+}
 const byId = id => document.getElementById(id);
 const safeText = value => String(value ?? '').replace(/[&<>"']/g,ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const validUrl = value => typeof value === 'string' && ( /^https:\/\//i.test(value) || /^data:image\/(png|jpeg|webp|gif);base64,[a-z0-9+/=]+$/i.test(value));
@@ -111,7 +181,8 @@ function itemArt(item){
   const placeholder = `<span class="trend-visual cat-${safeText(item.category)}" aria-hidden="true"><span class="trend-visual-icon">${safeText(item.emoji||'✳')}</span><small>${safeText(item.title)}</small></span>`;
   const src = item.src;
   const allowed = typeof src==='string' && (src.startsWith('assets/') || validUrl(src));
-  return allowed ? `<img src="${safeText(src)}" alt="" loading="lazy" draggable="false" onerror="this.hidden=true;this.insertAdjacentHTML('afterend',decodeURIComponent('${encodeURIComponent(placeholder)}'))">` : placeholder;
+  if(allowed)return `<img src="${safeText(src)}" alt="" loading="lazy" draggable="false" onerror="this.hidden=true;this.insertAdjacentHTML('afterend',decodeURIComponent('${encodeURIComponent(placeholder)}'))">`;
+  return item.imageQuery ? `<span class="auto-image-shell" data-autoimg="${safeText(item.id)}">${placeholder}</span>` : placeholder;
 }
 function selectedIds(){
   const d=getYear();
@@ -139,6 +210,7 @@ function renderLibrary(){
     const isCustom=db.custom.some(it=>it.id===item.id);
     return `<div class="catalog-card ${selected.has(item.id)?'placed':''}" data-add="${safeText(item.id)}" tabindex="0" role="button" aria-label="${safeText(item.title)} — ${selected.has(item.id)?'убрать':'добавить'}" draggable="true" data-drag="${safeText(item.id)}"><div class="catalog-image">${itemArt(item)}</div><div class="catalog-text"><b>${safeText(item.title)}</b><span>${safeText(CATEGORIES[item.category]||'Другое')}</span></div>${isCustom?`<button class="custom-delete" title="Удалить из каталога" data-delete="${safeText(item.id)}" aria-label="Удалить ${safeText(item.title)}">×</button>`:''}<span class="catalog-add">${selected.has(item.id)?'✓':'+'}</span></div>`;
   }).join('') : `<div class="catalog-empty">${list.length?'Ничего не найдено. Попробуй другой запрос.':'Пока пусто. Добавь первый тренд этого года — он появится здесь.'}</div>`;
+  hydrateAutoImages(byId('catalog'));
 }
 const boardFooter = () => `<div class="board-footer"><b>YEARCORE ✳</b><span>MY INTERNET TIME CAPSULE</span><span>↗ ${year}</span></div>`;
 const boardHead = (type='poster')=>{
@@ -171,6 +243,7 @@ function renderBingo(){
 function renderBoard(){
   const fn={poster:renderPoster,tier:renderTier,bingo:renderBingo}[mode];
   byId('board').innerHTML=fn();
+  hydrateAutoImages(byId('board'));
   const count=selectedIds().length;
   byId('boardStatus').textContent=`${count} ${count===1?'воспоминание':count>=2&&count<=4?'воспоминания':'воспоминаний'} в ${year} году`;
 }
@@ -393,6 +466,8 @@ async function renderCanvas(){
     H=270+step*size+145;
     for(let i=0;i<size*size;i++)layout.push({id:d.bingo[i],slot:i,x:67+(i%size)*step,y:265+Math.floor(i/size)*step,w:step-5,h:step-5});
   }
+  const imageIds=[...new Set(layout.map(entry=>entry.id).filter(Boolean))];
+  if(imageIds.length)await Promise.all(imageIds.map(id=>ensureItemImage(itemById(id))));
   H=Math.min(12000,H);
   const cnv=document.createElement('canvas');cnv.width=W;cnv.height=H;
   const ctx=cnv.getContext('2d');rect(ctx,0,0,W,H,'#eeece6');
