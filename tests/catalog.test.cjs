@@ -29,4 +29,19 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 assert(html.indexOf('src="trends.js"') < html.indexOf('src="script.js"'), 'catalog must load before app');
 assert(!html.includes('id="yearSelect"'), 'Other year field must be absent');
 assert(html.includes('id="mobileDock"'), 'mobile navigation should be present');
+
+// Historic-era placement and user-requested 2006 replacements.
+for (const removed of ['Первый прототип World Wide Web', 'Публичное открытие WWW',
+                       'Победа ХАМАС на выборах в Палестине', 'Google Docs (ранняя версия)']) {
+  assert(!catalog.some(item => item.title === removed), `Removed entry persists: ${removed}`);
+}
+for (const [year, title] of [
+  [1990, 'BBS и Фидонет — сетевые сообщества'],
+  [1991, 'Эпоха Web 1.0'],
+  [2004, 'Эпоха Web 2.0'],
+  [2006, 'Саммит G8 в Санкт-Петербурге'],
+  [2006, 'Opera 9 — браузер с BitTorrent']
+]) {
+  assert(catalog.some(item => item.year === year && item.title === title), `Missing ${year}: ${title}`);
+}
 console.log(`OK: ${catalog.length} curated trends, 36 years, >=10 per year, all key categories.`);

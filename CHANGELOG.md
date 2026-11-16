@@ -2,6 +2,15 @@
 
 All notable changes to YEARCORE are documented here.
 
+## [0.2.3] — 2026-11-16
+
+### Catalog corrections
+- Replaced the 2006 Hamas election entry with the G8 summit in St. Petersburg (2006).
+- Replaced Google Docs (2006) with Opera 9 (2006).
+- Replaced the 1990 WWW prototype entry with BBS/FidoNet.
+- Replaced the 1991 WWW opening entry with the Web 1.0 era, and added the Web 2.0 era to 2004.
+- Appended the Web 2.0 catalog record to preserve index-based IDs of existing curated cards.
+
 ## [0.2.1] — 2026-11-16
 
 ### Added
