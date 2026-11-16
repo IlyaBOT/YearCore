@@ -2,6 +2,12 @@
 
 All notable changes to YEARCORE are documented here.
 
+## [0.2.7] — 2026-11-16
+
+### Xbox 360 artwork
+- Pinned a local WebP image of the original white Xbox 360 Pro for the 2005 card, replacing the blank automatic image lookup.
+- Included image-source attribution and a regression check for its fixed asset path.
+
 ## [0.2.6] — 2026-11-16
 
 ### Historic screenshot correction

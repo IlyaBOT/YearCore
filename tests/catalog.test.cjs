@@ -77,4 +77,7 @@ assert(!script.includes("paintText(ctx,'PHOTO'"), 'PNG export must not draw PHOT
 const youtube2005 = catalog.find(item => item.year === 2005 && item.title === 'Запуск YouTube');
 assert(youtube2005, '2005 YouTube launch entry missing');
 assert(youtube2005.src === 'assets/2005-youtube-homepage.jpg', 'YouTube 2005 must use the pinned historical screenshot');
+const xbox360 = catalog.find(item => item.year === 2005 && item.title === 'Xbox 360');
+assert(xbox360, '2005 Xbox 360 entry is missing');
+assert(xbox360.src === 'assets/2005-xbox-360.webp', 'Xbox 360 must use the local first-generation console image');
 console.log(`OK: ${catalog.length} curated trends, 36 years, >=10 per year, all key categories.`);
