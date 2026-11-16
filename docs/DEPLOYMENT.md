@@ -9,7 +9,7 @@ build action, database, home server, or external API.
 2. Upload this repository's contents to the repository root.
 3. Open **Settings → Pages → Build and deployment**.
 4. Select **Deploy from a branch**, `main`, `/(root)`, then **Save**.
-5. Use <https://ilyabot.github.io/yearcore/> after Pages completes deployment.
+5. Use <https://ilyabot.github.io/YearCore/> after Pages completes deployment.
 
 GitHub repository settings cannot be enabled by files alone.
 
@@ -39,7 +39,7 @@ a domain before it is configured.
 In the repository's **About** pane, click the gear:
 
 - Description: `A nostalgic internet time capsule. Create your own yearly trend posters, tier lists and bingo boards.`
-- Website: `https://ilyabot.github.io/yearcore/` (or verified custom domain).
+- Website: `https://ilyabot.github.io/YearCore/` (or verified custom domain).
 - Topics: `nostalgia`, `internet-culture`, `tier-list`, `bingo`,
   `time-capsule`, `memes`, `retro-web`, `github-pages`, `javascript`.
 
