@@ -2,6 +2,21 @@
 
 All notable changes to YEARCORE are documented here.
 
+## [0.2.1] — 2026-11-16
+
+### Added
+- Russian/Runet-focused selections: VKontakte, 2ch / Двач, QIP, Mail.ru Agent, LiveJournal, Diary.ru and Yandex.
+- Additional Samsung and Sony Ericsson device references.
+- Wikipedia thumbnail search and browser-side image URL caching for curated cards.
+
+### Improved
+- Curated card artwork in poster, tier list, bingo and canvas PNG export.
+- Preserved the existing responsive mobile navigation and the fixed 1990–2025 selector.
+
+### Limitations
+- External images may be unavailable or imperfectly matched; fallback visuals remain.
+- Image attribution and reuse rights are determined by the source image license.
+
 ## [0.2.0] — 2026-11-16
 
 ### Added
