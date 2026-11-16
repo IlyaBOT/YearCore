@@ -2,6 +2,13 @@
 
 All notable changes to YEARCORE are documented here.
 
+## [0.2.5] — 2026-11-16
+
+### Image loading
+- Pinned the original 1998 Powerpuff Girls logo from Wikimedia Commons rather than relying on Wikipedia thumbnail search.
+- Removed the gray “ФОТО” badge from loading and missing-image placeholders, including exported PNG.
+- Kept the placeholder visible until the requested image successfully loads and invalidated broken cached image URLs.
+
 ## [0.2.4] — 2026-11-16
 
 ### Catalog and image-query fixes

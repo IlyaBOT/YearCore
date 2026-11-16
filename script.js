@@ -111,7 +111,7 @@ async function ensureItemImage(item){
   return promise;
 }
 function placeholderHtml(item){
-  return `<span class="trend-visual trend-visual-loading cat-${safeText(item.category)}" aria-hidden="true"><span class="trend-visual-badge">Фото</span><small>${safeText(item.title)}</small></span>`;
+  return `<span class="trend-visual trend-visual-loading cat-${safeText(item.category)}" aria-hidden="true"><small>${safeText(item.title)}</small></span>`;
 }
 async function hydrateAutoImages(root=document){
   const shells = [...root.querySelectorAll('[data-autoimg]')];
@@ -121,8 +121,27 @@ async function hydrateAutoImages(root=document){
     shell.dataset.state = 'loading';
     const src = await ensureItemImage(item);
     if (!src) { shell.dataset.state = 'failed'; return; }
-    shell.dataset.state = 'done';
-    shell.innerHTML = `<img src="${safeText(src)}" alt="" loading="lazy" draggable="false">`;
+    // Replace the placeholder only after the image actually loads.
+    const image = new Image();
+    image.alt = '';
+    image.draggable = false;
+    image.decoding = 'async';
+    image.onload = () => {
+      if (!shell.isConnected) return;
+      shell.replaceChildren(image);
+      shell.dataset.state = 'done';
+    };
+    image.onerror = () => {
+      shell.dataset.state = 'failed';
+      // Avoid indefinitely caching broken image URLs.
+      const key = normalizeImageQuery(item.imageQuery || item.title);
+      if (imageCache[key] === src) {
+        delete imageCache[key];
+        saveImageCache();
+      }
+      if (item.src === src) item.src = '';
+    };
+    image.src = src;
   }));
 }
 const byId = id => document.getElementById(id);
@@ -454,8 +473,7 @@ function drawFallbackThumb(ctx,item,x,y,w,h,compact=false){
   ctx.strokeStyle='#d9dfe9';
   ctx.lineWidth=1;
   ctx.strokeRect(x+.5,y+.5,w-1,h-1);
-  rect(ctx,x+10,y+10,compact?34:58,compact?18:22,'#ffffffd8',12);
-  paintText(ctx,'PHOTO',x+(compact?27:39),y+(compact?23:25),compact?10:12,'#6d7380',800,'center');
+  // No generic “PHOTO” badge: the artwork or title identifies the card.
   const max = compact ? 18 : 40;
   let text = String(item?.title || '');
   if (compact) {

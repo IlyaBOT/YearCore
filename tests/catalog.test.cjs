@@ -65,4 +65,13 @@ for (const [year, title, queryPart] of [
 }
 assert(!catalog.some(item => item.title === 'Java представлена публике'), 'Old Java entry should be removed');
 
+
+const powerpuff = catalog.find(item => item.year === 1998 && item.title === '«Суперкрошки»');
+assert(powerpuff, '1998 Powerpuff Girls catalog card missing');
+assert(powerpuff.src.startsWith('https://upload.wikimedia.org/wikipedia/commons/'),
+  'Powerpuff Girls should use an explicit Wikimedia image rather than a search placeholder');
+const script = fs.readFileSync(path.join(root, 'script.js'), 'utf8');
+assert(!script.includes('trend-visual-badge">Фото'), 'Visible ФОТО placeholder must not exist');
+assert(!script.includes("paintText(ctx,'PHOTO'"), 'PNG export must not draw PHOTO placeholder');
+
 console.log(`OK: ${catalog.length} curated trends, 36 years, >=10 per year, all key categories.`);
