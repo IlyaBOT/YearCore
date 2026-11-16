@@ -32,7 +32,7 @@ YEARCORE помогает собрать собственную версию к�
 ## Быстрый старт
 
 ```bash
-git clone https://github.com/IlyaBOT/yearcore.git
+git clone https://github.com/IlyaBOT/YearCore.git
 cd yearcore
 python -m http.server 8080
 ```
@@ -47,7 +47,7 @@ python -m http.server 8080
 1. Открой **Settings → Pages**.
 2. Выбери **Deploy from a branch** → `main` → `/(root)`.
 3. Сохрани настройки; после публикации адрес будет
-   **https://ilyabot.github.io/yearcore/**.
+   **https://ilyabot.github.io/YearCore/**.
 
 GitHub Pages поддерживает собственные домены, в том числе
 `yearcore.ilyabot.space`. DNS-запись `CNAME` должна указывать на
