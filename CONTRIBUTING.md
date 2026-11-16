@@ -5,7 +5,7 @@ YEARCORE is a small, dependency-free web app. Contributions are welcome.
 ## Run locally
 
 ```bash
-git clone https://github.com/IlyaBOT/yearcore.git
+git clone https://github.com/IlyaBOT/YearCore.git
 cd yearcore
 python -m http.server 8080
 ```
