@@ -2,6 +2,13 @@
 
 All notable changes to YEARCORE are documented here.
 
+## [0.2.6] — 2026-11-16
+
+### Historic screenshot correction
+- Pinned an actual 2005 YouTube homepage screenshot (red “Tube” logo, old search and tag-cloud layout) for the "Запуск YouTube" card.
+- Stored the JPEG in the repo under `assets/2005-youtube-homepage.jpg` to avoid unreliable Wikipedia image search and hotlinking.
+- Added an explicit catalog regression check and documented the archival source and asset rights.
+
 ## [0.2.5] — 2026-11-16
 
 ### Image loading

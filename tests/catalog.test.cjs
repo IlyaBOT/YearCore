@@ -74,4 +74,7 @@ const script = fs.readFileSync(path.join(root, 'script.js'), 'utf8');
 assert(!script.includes('trend-visual-badge">Фото'), 'Visible ФОТО placeholder must not exist');
 assert(!script.includes("paintText(ctx,'PHOTO'"), 'PNG export must not draw PHOTO placeholder');
 
+const youtube2005 = catalog.find(item => item.year === 2005 && item.title === 'Запуск YouTube');
+assert(youtube2005, '2005 YouTube launch entry missing');
+assert(youtube2005.src === 'assets/2005-youtube-homepage.jpg', 'YouTube 2005 must use the pinned historical screenshot');
 console.log(`OK: ${catalog.length} curated trends, 36 years, >=10 per year, all key categories.`);
