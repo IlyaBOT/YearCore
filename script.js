@@ -2,6 +2,7 @@
 
 /* YEARCORE: a static, local-first trend-list maker. No account, API, or build step. */
 const DB_KEY = 'yearcore-v1';
+const IMAGE_CACHE_KEY = 'yearcore-image-cache-v1';
 const CATEGORIES = {
   all: 'Все', sites: 'Сайты', devices: 'Техника', games: 'Игры',
   memes: 'Мемы', apps: 'Софт', cinema: 'Кино', music: 'Музыка',
@@ -54,75 +55,75 @@ const BUILTIN = [
   })),
   ...(window.YEARCORE_TRENDS || [])
 ];
-const IMAGE_CACHE_KEY = 'yearcore-image-cache-v1';
-let imageCache = (() => {
-  try { return JSON.parse(localStorage.getItem(IMAGE_CACHE_KEY)) || {}; }
-  catch (_) { return {}; }
-})();
-const imageRequests = new Map();
+function readImageCache(){
+  try {
+    const value = JSON.parse(localStorage.getItem(IMAGE_CACHE_KEY));
+    if (value && typeof value === 'object') return value;
+  } catch (e) { console.warn('Image cache unavailable', e); }
+  return {};
+}
+let imageCache = readImageCache();
+const imagePromises = new Map();
 function saveImageCache(){
   try { localStorage.setItem(IMAGE_CACHE_KEY, JSON.stringify(imageCache)); }
-  catch (_) { /* Browser storage may be unavailable. */ }
+  catch (e) { console.warn('Image cache save failed', e); }
 }
-function normalizeImageQuery(value){
-  return String(value || '').replace(/[«»]/g,'').replace(/[–—]/g,' ').replace(/\([^)]*\)/g,' ').replace(/\s+/g,' ').trim();
+function normalizeImageQuery(value=''){
+  return String(value).replace(/[«»]/g,'').replace(/[–—]/g,' ').replace(/\([^)]*\)/g,' ').replace(/\s+/g,' ').trim();
 }
-async function fetchWikiThumb(query,lang){
+async function fetchWikiThumb(query, lang='ru'){
   const params = new URLSearchParams({
-    action:'query',format:'json',formatversion:'2',origin:'*',
-    generator:'search',gsrsearch:query,gsrlimit:'1',
-    prop:'pageimages',piprop:'thumbnail',pithumbsize:'640'
+    action:'query', format:'json', formatversion:'2', origin:'*',
+    generator:'search', gsrsearch: query, gsrlimit:'1',
+    prop:'pageimages', piprop:'thumbnail', pithumbsize:'640', pilicense:'any'
   });
-  const response = await fetch('https://' + lang + '.wikipedia.org/w/api.php?' + params.toString());
-  if(!response.ok) throw Error('Wikipedia image search failed');
+  const response = await fetch(`https://${lang}.wikipedia.org/w/api.php?${params.toString()}`);
+  if (!response.ok) throw new Error('Wikipedia fetch failed');
   const data = await response.json();
   const page = (data?.query?.pages || []).find(entry => entry?.thumbnail?.source);
   return page?.thumbnail?.source || '';
 }
 async function ensureItemImage(item){
-  if(!item)return '';
-  if(typeof item.src==='string' && (item.src.startsWith('assets/') || validUrl(item.src)))return item.src;
-  const key = normalizeImageQuery(item.imageQuery || item.title);
-  if(!key)return '';
-  if(imageCache[key]){ item.src=imageCache[key]; return item.src; }
-  if(imageRequests.has(key))return imageRequests.get(key);
-  const request = (async () => {
-    const language = /^en:/i.test(key) ? ['en'] : /^ru:/i.test(key) ? ['ru'] : ['ru','en'];
-    const query = key.replace(/^(ru|en):/i,'').trim();
-    for(const lang of language){
-      try{
-        const src = await fetchWikiThumb(query,lang);
-        if(src && validUrl(src)){
-          imageCache[key]=src;
-          item.src=src;
+  if (!item) return '';
+  if (typeof item.src === 'string' && (item.src.startsWith('assets/') || validUrl(item.src))) return item.src;
+  const rawQuery = item.imageQuery || item.title;
+  const imageQuery = normalizeImageQuery(rawQuery);
+  if (!imageQuery) return '';
+  if (imageCache[imageQuery]) { item.src = imageCache[imageQuery]; return item.src; }
+  if (imagePromises.has(imageQuery)) return imagePromises.get(imageQuery);
+  const promise = (async () => {
+    const langs = /^en:/i.test(imageQuery) ? ['en'] : /^ru:/i.test(imageQuery) ? ['ru'] : ['ru','en'];
+    const query = imageQuery.replace(/^(ru|en):/i,'').trim();
+    for (const lang of langs) {
+      try {
+        const src = await fetchWikiThumb(query, lang);
+        if (src && validUrl(src)) {
+          imageCache[imageQuery] = src;
+          item.src = src;
           saveImageCache();
           return src;
         }
-      }catch(e){ console.debug('Image search unavailable:',query,lang); }
+      } catch (error) {}
     }
     return '';
-  })().finally(()=>imageRequests.delete(key));
-  imageRequests.set(key,request);
-  return request;
+  })().finally(() => imagePromises.delete(imageQuery));
+  imagePromises.set(imageQuery, promise);
+  return promise;
 }
-function hydrateAutoImages(root){
-  if(!root)return;
-  root.querySelectorAll('[data-autoimg]').forEach(shell => {
-    if(shell.dataset.loading || shell.dataset.ready)return;
-    const item=itemById(shell.dataset.autoimg);
-    if(!item)return;
-    shell.dataset.loading='1';
-    ensureItemImage(item).then(src=>{
-      if(!src || !shell.isConnected)return;
-      const fallback=shell.innerHTML;
-      const img=document.createElement('img');
-      img.src=src; img.alt=''; img.loading='lazy'; img.draggable=false;
-      img.onerror=()=>{ shell.innerHTML=fallback; delete shell.dataset.ready; };
-      shell.classList.add('auto-loaded');
-      shell.replaceChildren(img);
-      shell.dataset.ready='1';
-    }).finally(()=>{ delete shell.dataset.loading; });
-  });
+function placeholderHtml(item){
+  return `<span class="trend-visual trend-visual-loading cat-${safeText(item.category)}" aria-hidden="true"><span class="trend-visual-badge">Фото</span><small>${safeText(item.title)}</small></span>`;
+}
+async function hydrateAutoImages(root=document){
+  const shells = [...root.querySelectorAll('[data-autoimg]')];
+  await Promise.all(shells.map(async shell => {
+    const item = itemById(shell.dataset.autoimg);
+    if (!item || shell.dataset.state === 'done' || shell.dataset.state === 'loading') return;
+    shell.dataset.state = 'loading';
+    const src = await ensureItemImage(item);
+    if (!src) { shell.dataset.state = 'failed'; return; }
+    shell.dataset.state = 'done';
+    shell.innerHTML = `<img src="${safeText(src)}" alt="" loading="lazy" draggable="false">`;
+  }));
 }
 const byId = id => document.getElementById(id);
 const safeText = value => String(value ?? '').replace(/[&<>"']/g,ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -178,11 +179,11 @@ function itemsForYear(y=year){return [...BUILTIN,...db.custom].filter(it=>it.yea
 function itemById(id){return BUILTIN.find(it=>it.id===id)||db.custom.find(it=>it.id===id)||null;}
 function itemArt(item){
   if(!item) return `<span class="fallback">✳</span>`;
-  const placeholder = `<span class="trend-visual cat-${safeText(item.category)}" aria-hidden="true"><span class="trend-visual-icon">${safeText(item.emoji||'✳')}</span><small>${safeText(item.title)}</small></span>`;
+  const placeholder = placeholderHtml(item);
   const src = item.src;
   const allowed = typeof src==='string' && (src.startsWith('assets/') || validUrl(src));
-  if(allowed)return `<img src="${safeText(src)}" alt="" loading="lazy" draggable="false" onerror="this.hidden=true;this.insertAdjacentHTML('afterend',decodeURIComponent('${encodeURIComponent(placeholder)}'))">`;
-  return item.imageQuery ? `<span class="auto-image-shell" data-autoimg="${safeText(item.id)}">${placeholder}</span>` : placeholder;
+  if (allowed) return `<img src="${safeText(src)}" alt="" loading="lazy" draggable="false" onerror="this.hidden=true;this.insertAdjacentHTML('afterend',decodeURIComponent('${encodeURIComponent(placeholder)}'))">`;
+  return item.imageQuery ? `<div class="auto-image-shell" data-autoimg="${safeText(item.id)}">${placeholder}</div>` : placeholder;
 }
 function selectedIds(){
   const d=getYear();
@@ -210,7 +211,6 @@ function renderLibrary(){
     const isCustom=db.custom.some(it=>it.id===item.id);
     return `<div class="catalog-card ${selected.has(item.id)?'placed':''}" data-add="${safeText(item.id)}" tabindex="0" role="button" aria-label="${safeText(item.title)} — ${selected.has(item.id)?'убрать':'добавить'}" draggable="true" data-drag="${safeText(item.id)}"><div class="catalog-image">${itemArt(item)}</div><div class="catalog-text"><b>${safeText(item.title)}</b><span>${safeText(CATEGORIES[item.category]||'Другое')}</span></div>${isCustom?`<button class="custom-delete" title="Удалить из каталога" data-delete="${safeText(item.id)}" aria-label="Удалить ${safeText(item.title)}">×</button>`:''}<span class="catalog-add">${selected.has(item.id)?'✓':'+'}</span></div>`;
   }).join('') : `<div class="catalog-empty">${list.length?'Ничего не найдено. Попробуй другой запрос.':'Пока пусто. Добавь первый тренд этого года — он появится здесь.'}</div>`;
-  hydrateAutoImages(byId('catalog'));
 }
 const boardFooter = () => `<div class="board-footer"><b>YEARCORE ✳</b><span>MY INTERNET TIME CAPSULE</span><span>↗ ${year}</span></div>`;
 const boardHead = (type='poster')=>{
@@ -243,7 +243,6 @@ function renderBingo(){
 function renderBoard(){
   const fn={poster:renderPoster,tier:renderTier,bingo:renderBingo}[mode];
   byId('board').innerHTML=fn();
-  hydrateAutoImages(byId('board'));
   const count=selectedIds().length;
   byId('boardStatus').textContent=`${count} ${count===1?'воспоминание':count>=2&&count<=4?'воспоминания':'воспоминаний'} в ${year} году`;
 }
@@ -258,7 +257,7 @@ function renderControls(){
   byId('modeHelp').textContent=help[mode];
   document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
 }
-function renderAll(){renderYears();renderFilters();renderLibrary();renderBoard();renderControls();}
+function renderAll(){renderYears();renderFilters();renderLibrary();renderBoard();renderControls();hydrateAutoImages(byId('catalog'));hydrateAutoImages(byId('board'));}
 function setYear(y){
   if(!canYear(y))return;
   year=y; filter='all';search='';byId('search').value='';
@@ -447,6 +446,35 @@ function contain(ctx,im,x,y,w,h){
   const s=Math.min(w/iw,h/ih),a=iw*s,b=ih*s;
   ctx.drawImage(im,x+(w-a)/2,y+(h-b)/2,a,b);
 }
+function drawFallbackThumb(ctx,item,x,y,w,h,compact=false){
+  const grad = ctx.createLinearGradient(x,y,x+w,y+h);
+  grad.addColorStop(0,'#eef1f7');
+  grad.addColorStop(1,'#cfdaf0');
+  rect(ctx,x,y,w,h,grad,compact?2:3);
+  ctx.strokeStyle='#d9dfe9';
+  ctx.lineWidth=1;
+  ctx.strokeRect(x+.5,y+.5,w-1,h-1);
+  rect(ctx,x+10,y+10,compact?34:58,compact?18:22,'#ffffffd8',12);
+  paintText(ctx,'PHOTO',x+(compact?27:39),y+(compact?23:25),compact?10:12,'#6d7380',800,'center');
+  const max = compact ? 18 : 40;
+  let text = String(item?.title || '');
+  if (compact) {
+    clippedText(ctx,text,x+w/2,y+h-10,w-10,Math.max(10,Math.min(12,w/10)),'#27303b','center');
+  } else {
+    ctx.font=`800 ${Math.max(14, Math.min(18, w/16))}px Arial, sans-serif`;
+    ctx.fillStyle='#25303a';
+    ctx.textAlign='left';
+    const words=text.split(/\s+/); let line=''; let yy=y+h/2;
+    const lines=[];
+    for(const word of words){
+      const trial = line ? line+' '+word : word;
+      if(ctx.measureText(trial).width > w-26 && line){ lines.push(line); line=word; if(lines.length===2) break; }
+      else line=trial;
+    }
+    if(line && lines.length<2) lines.push(line);
+    for(const ln of lines.slice(0,2)) { ctx.fillText(ln,x+13,yy); yy += 19; }
+  }
+}
 async function renderCanvas(){
   const d=getYear();const W=1200;
   let H=1500;
@@ -466,8 +494,8 @@ async function renderCanvas(){
     H=270+step*size+145;
     for(let i=0;i<size*size;i++)layout.push({id:d.bingo[i],slot:i,x:67+(i%size)*step,y:265+Math.floor(i/size)*step,w:step-5,h:step-5});
   }
-  const imageIds=[...new Set(layout.map(entry=>entry.id).filter(Boolean))];
-  if(imageIds.length)await Promise.all(imageIds.map(id=>ensureItemImage(itemById(id))));
+  const idsToPrefetch = [...new Set(layout.map(entry => entry.id).filter(Boolean))];
+  if (idsToPrefetch.length) await Promise.all(idsToPrefetch.map(id => ensureItemImage(itemById(id))));
   H=Math.min(12000,H);
   const cnv=document.createElement('canvas');cnv.width=W;cnv.height=H;
   const ctx=cnv.getContext('2d');rect(ctx,0,0,W,H,'#eeece6');
@@ -485,7 +513,7 @@ async function renderCanvas(){
       rect(ctx,-lay.w/2,-lay.h/2,lay.w,lay.h,'#fff',3);ctx.shadowColor='transparent';
       rect(ctx,-lay.w/2+9,-lay.h/2+9,lay.w-18,lay.h-55,'#efede7',2);
       contain(ctx,img,-lay.w/2+12,-lay.h/2+12,lay.w-24,lay.h-63);
-      if(!img)paintText(ctx,item.emoji||'✳',0,5,72,'#f2643d',700,'center');
+      if(!img)drawFallbackThumb(ctx,item,-lay.w/2+12,-lay.h/2+12,lay.w-24,lay.h-63,false);
       clippedText(ctx,item.title,-lay.w/2+16,lay.h/2-16,lay.w-35,19);
       ctx.restore();
     });
@@ -503,7 +531,7 @@ async function renderCanvas(){
         const img=await waitImg(item.src),x=row.x+163+(i%8)*116,y=row.y+9+Math.floor(i/8)*133;
         rect(ctx,x,y,108,114,'#eeece6',3);
         contain(ctx,img,x+4,y+4,100,84);
-        if(!img)paintText(ctx,item.emoji||'✳',x+55,y+60,32,'#eb653b',700,'center');
+        if(!img)drawFallbackThumb(ctx,item,x+4,y+4,100,84,true);
         clippedText(ctx,item.title,x+4,y+105,101,12);
       }
     }
@@ -516,7 +544,7 @@ async function renderCanvas(){
       const item=itemById(lay.id),im=imgs[i];
       rect(ctx,lay.x,lay.y,lay.w,lay.h,'#fff');
       if(item){contain(ctx,im,lay.x+8,lay.y+8,lay.w-16,lay.h-34);
-        if(!im)paintText(ctx,item.emoji||'✳',lay.x+lay.w/2,lay.y+lay.h/2+12,42,'#f2643d',700,'center');
+        if(!im)drawFallbackThumb(ctx,item,lay.x+8,lay.y+8,lay.w-16,lay.h-34,true);
         clippedText(ctx,item.title,lay.x+lay.w/2,lay.y+lay.h-10,lay.w-12,Math.max(11,Math.min(15,lay.w/10)),'#1c1d1a','center');
         if(d.marked.includes(lay.slot)){ctx.fillStyle='#b9db8fa8';ctx.fillRect(lay.x,lay.y,lay.w,lay.h);paintText(ctx,'✓',lay.x+lay.w/2,lay.y+lay.h/2+29,80,'#2b5e31',800,'center');}
       }else paintText(ctx,'+',lay.x+lay.w/2,lay.y+lay.h/2+17,49,'#d0cbc2',700,'center');
